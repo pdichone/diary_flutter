@@ -1,5 +1,10 @@
+import 'dart:js';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:diary/model/diary.dart';
 import 'package:diary/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class WriteEntryDialog extends StatelessWidget {
   const WriteEntryDialog({
@@ -7,7 +12,7 @@ class WriteEntryDialog extends StatelessWidget {
     required this.selectedDate,
     required TextEditingController titleTextController,
     required TextEditingController descriptionTextController,
-  })  : _titleTextController = titleTextController,
+  })   : _titleTextController = titleTextController,
         _descriptionTextController = descriptionTextController,
         super(key: key);
 
@@ -17,6 +22,8 @@ class WriteEntryDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _linkReference = Provider.of<CollectionReference>(context);
+
     return AlertDialog(
       elevation: 5,
       content: Container(
@@ -62,7 +69,20 @@ class WriteEntryDialog extends StatelessWidget {
                     //                     13),
                     //             side: BorderSide(
                     //                 color: Colors.green)))),
-                    onPressed: () {},
+                    onPressed: () {
+                      final _fieldsNotEmpty =
+                          _titleTextController.text.isNotEmpty &&
+                              _descriptionTextController.text.isNotEmpty;
+
+                      if (_fieldsNotEmpty) {
+                        _linkReference.add(Diary(
+                                author: "current user!",
+                                entryTime: Timestamp.fromDate(selectedDate),
+                                entry: _descriptionTextController.text,
+                                title: _titleTextController.text)
+                            .toMap());
+                      }
+                    },
                     child: Text('Done'))
               ],
             ),

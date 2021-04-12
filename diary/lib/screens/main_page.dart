@@ -1,10 +1,8 @@
-import 'dart:html';
-
-import 'package:diary/utils/date_formatter.dart';
+import 'package:diary/model/diary.dart';
+import 'package:diary/widgets/diary_list_view.dart';
 import 'package:diary/widgets/write_entry_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:hexcolor/hexcolor.dart';
-import 'package:hexcolor/hexcolor_web.dart';
+import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class MainPage extends StatefulWidget {
@@ -19,6 +17,8 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     final _screenSize = MediaQuery.of(context).size;
+    final _listOfDiaries = Provider.of<List<Diary>>(context);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey.shade100,
@@ -67,7 +67,9 @@ class _MainPageState extends State<MainPage> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.blue)),
                         suffixIcon: TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              //print("list==> ${_listOfDiaries.length}");
+                            },
                             child: SizedBox(
                               child: Icon(Icons.check),
                             )),
@@ -148,7 +150,7 @@ class _MainPageState extends State<MainPage> {
                           selectedDate =
                               dateRangePickerSelectionChangedArgs.value;
                         });
-                        print(selectedDate.toLocal().toIso8601String());
+                        //print(selectedDate.toLocal().toIso8601String());
                       },
                     ),
                   ),
@@ -211,71 +213,10 @@ class _MainPageState extends State<MainPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Expanded(
-                          child: SizedBox(
-                            width: _screenSize.width * 0.4,
-                            child: ListView.builder(
-                              itemCount: 15,
-                              itemBuilder: (context, index) {
-                                return Card(
-                                  elevation: 4,
-                                  child: Column(
-                                    children: [
-                                      ListTile(
-                                        title: Padding(
-                                          padding: const EdgeInsets.all(10.0),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                '${formattDate(selectedDate)}',
-                                                style: TextStyle(
-                                                    color: Colors.blueGrey,
-                                                    fontSize: 19,
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                              ),
-                                              TextButton.icon(
-                                                  onPressed: () {},
-                                                  icon: Icon(
-                                                    Icons.add_circle_outline,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  label: Text(''))
-                                            ],
-                                          ),
-                                        ),
-                                        subtitle: Column(
-                                          children: [
-                                            Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Text('time added'),
-                                                  TextButton.icon(
-                                                      onPressed: () {},
-                                                      icon: Icon(
-                                                          Icons.more_horiz),
-                                                      label: Text(''))
-                                                ]),
-                                            Image.network(
-                                              'https://picsum.photos/400/200',
-                                              //width: _screenSize.width * 0.9,
-                                              //height: 100,
-                                            ),
-                                            Text(
-                                                'The actual thoughts, description goes here...')
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        )
+                            child: DiaryListView(
+                                screenSize: _screenSize,
+                                listOfDiaries: _listOfDiaries,
+                                selectedDate: selectedDate))
                       ],
                     ),
                   ),

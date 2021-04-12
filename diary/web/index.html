@@ -30,6 +30,19 @@
   <!-- This script installs service_worker.js to provide PWA functionality to
        application. For more information, see:
        https://developers.google.com/web/fundamentals/primers/service-workers -->
+
+       <!-- The core Firebase JS SDK is always required and must be listed first -->
+<!-- <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script> -->
+
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+     https://firebase.google.com/docs/web/setup#available-libraries -->
   <script>
     var serviceWorkerVersion = null;
     var scriptLoaded = false;
@@ -94,6 +107,20 @@
       loadMainDartJs();
     }
   </script>
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyBTvfjeQVHgI2_OEiffggMLKnW_fRpo-9w",
+    authDomain: "diary-flutter-test.firebaseapp.com",
+    projectId: "diary-flutter-test",
+    storageBucket: "diary-flutter-test.appspot.com",
+    messagingSenderId: "100080701715",
+    appId: "1:100080701715:web:716d4b304f1e25e9c54ae6"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+</script>
   <!-- <script type="text/javascript">
     let useHtml = true;
     if(useHtml) {
