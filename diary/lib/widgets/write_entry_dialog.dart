@@ -1,3 +1,4 @@
+import 'dart:html';
 import 'dart:js';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +7,7 @@ import 'package:diary/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class WriteEntryDialog extends StatelessWidget {
+class WriteEntryDialog extends StatefulWidget {
   const WriteEntryDialog({
     Key? key,
     required this.selectedDate,
@@ -20,6 +21,12 @@ class WriteEntryDialog extends StatelessWidget {
   final TextEditingController _titleTextController;
   final TextEditingController _descriptionTextController;
 
+  @override
+  _WriteEntryDialogState createState() => _WriteEntryDialogState();
+}
+
+class _WriteEntryDialogState extends State<WriteEntryDialog> {
+  var _buttonText = 'Done';
   @override
   Widget build(BuildContext context) {
     final _linkReference = Provider.of<CollectionReference>(context);
@@ -41,7 +48,35 @@ class WriteEntryDialog extends StatelessWidget {
                       style: TextButton.styleFrom(
                         primary: Colors.black,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        // showDialog(
+                        //   context: context,
+                        //   builder: (context) {
+                        //     return AlertDialog(
+                        //       title: Text(
+                        //         'Unsaved Changes',
+                        //         style: TextStyle(color: Colors.red),
+                        //       ),
+                        //       content: Text(
+                        //           'Are you sure you want to discard all your changes? If you click \'discard\', you will not be able to see the changes.'),
+                        //       actions: [
+                        //         TextButton(
+                        //             onPressed: () => Navigator.of(context).pop(),
+                        //             child: Text('Cancel')),
+                        //         TextButton(
+                        //             onPressed: () {
+
+                        //             },
+                        //             child: Text(
+                        //               'Discard',
+                        //               style: TextStyle(color: Colors.red),
+                        //             ))
+                        //       ],
+                        //     );
+                        //   },
+                        // );
+                      },
                       child: Text('Discard')),
                 ),
                 TextButton(
@@ -71,19 +106,32 @@ class WriteEntryDialog extends StatelessWidget {
                     //                 color: Colors.green)))),
                     onPressed: () {
                       final _fieldsNotEmpty =
-                          _titleTextController.text.isNotEmpty &&
-                              _descriptionTextController.text.isNotEmpty;
+                          widget._titleTextController.text.isNotEmpty &&
+                              widget._descriptionTextController.text.isNotEmpty;
 
                       if (_fieldsNotEmpty) {
                         _linkReference.add(Diary(
                                 author: "current user!",
-                                entryTime: Timestamp.fromDate(selectedDate),
-                                entry: _descriptionTextController.text,
-                                title: _titleTextController.text)
+                                entryTime:
+                                    Timestamp.fromDate(widget.selectedDate),
+                                entry: widget._descriptionTextController.text,
+                                title: widget._titleTextController.text)
                             .toMap());
+
+                        setState(() {
+                          _buttonText = 'Saving...';
+                        });
+                        Future.delayed(
+                          Duration(milliseconds: 2500),
+                        ).then((value) {
+                          Navigator.of(context).pop();
+                        });
                       }
                     },
-                    child: Text('Done'))
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(_buttonText),
+                    ))
               ],
             ),
             SizedBox(
@@ -112,7 +160,16 @@ class WriteEntryDialog extends StatelessWidget {
                             child: IconButton(
                                 splashRadius: 26,
                                 hoverColor: Colors.red,
-                                onPressed: () {},
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return Text('');
+                                      // return AlertDialog(
+                                      //   title: Text(
+                                    },
+                                  );
+                                },
                                 icon: Icon(Icons.delete_outline_rounded)),
                           )
                         ],
@@ -126,7 +183,7 @@ class WriteEntryDialog extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("${formattDate(selectedDate)}"),
+                            Text("${formattDate(widget.selectedDate)}"),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * 0.5,
                               child: Form(
@@ -134,7 +191,7 @@ class WriteEntryDialog extends StatelessWidget {
                                 children: [
                                   TextFormField(
                                     validator: (value) {},
-                                    controller: _titleTextController,
+                                    controller: widget._titleTextController,
                                     decoration: InputDecoration(
                                       hintText: 'Title...',
                                     ),
@@ -144,7 +201,8 @@ class WriteEntryDialog extends StatelessWidget {
                                         null, // make this null so that we have true multiline
                                     validator: (value) {},
                                     keyboardType: TextInputType.multiline,
-                                    controller: _descriptionTextController,
+                                    controller:
+                                        widget._descriptionTextController,
                                     decoration: InputDecoration(
                                         hintText:
                                             'Writy your thoughts here...'),

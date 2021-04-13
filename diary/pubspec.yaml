@@ -30,6 +30,7 @@ dependencies:
   hexcolor: ^2.0.3
   provider: ^5.0.0
   syncfusion_flutter_datepicker: ^19.1.55-beta
+  timeago: ^3.0.2
 
 dev_dependencies:
   flutter_test:

@@ -20,7 +20,7 @@ class Diary {
 
   factory Diary.fromDocument(QueryDocumentSnapshot data) {
     return Diary(
-        id: data.data()['id'],
+        id: data.id,
         author: data.data()['author'],
         entryTime: data.data()['entry_time'],
         photoUrls: data.data()['photo_list'],

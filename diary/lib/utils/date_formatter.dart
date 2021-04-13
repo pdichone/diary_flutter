@@ -6,5 +6,10 @@ String formattDate(DateTime date) {
 }
 
 String formatDateFromTimestamp(Timestamp? timestamp) {
-  return DateFormat.yMMMd().format(timestamp!.toDate());
+  return DateFormat.yMMMd().add_EEEE().format(timestamp!.toDate());
+}
+
+String formatDateFromTimestampHour(Timestamp? timestamp) {
+  return DateFormat.jm().format(timestamp!.toDate());
+  //return DateFormat.yMMMd().add_jm().format(timestamp!.toDate());
 }

@@ -19,6 +19,9 @@ class _MainPageState extends State<MainPage> {
     final _screenSize = MediaQuery.of(context).size;
     final _listOfDiaries = Provider.of<List<Diary>>(context);
 
+    TextEditingController _titleTextController = TextEditingController();
+    TextEditingController _descriptionTextController = TextEditingController();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.grey.shade100,
@@ -174,11 +177,6 @@ class _MainPageState extends State<MainPage> {
                             showDialog(
                               context: context,
                               builder: (context) {
-                                TextEditingController _titleTextController =
-                                    TextEditingController();
-                                TextEditingController
-                                    _descriptionTextController =
-                                    TextEditingController();
                                 return WriteEntryDialog(
                                     selectedDate: selectedDate,
                                     titleTextController: _titleTextController,
@@ -227,7 +225,17 @@ class _MainPageState extends State<MainPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return WriteEntryDialog(
+                  selectedDate: selectedDate,
+                  titleTextController: _titleTextController,
+                  descriptionTextController: _descriptionTextController);
+            },
+          );
+        },
         tooltip: 'Add',
         child: Icon(Icons.add),
       ),

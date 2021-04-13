@@ -28,8 +28,8 @@ class DiaryListView extends StatelessWidget {
           final diary = _listOfDiaries[index];
           final isSameEntryDate = (DateTime.now().toString().split(' ')[0] ==
               diary.entryTime?.toDate().toString().split(' ')[0]);
-          print(
-              "Diary --> Date now: ${DateTime.now().toString().split(' ')[0]} \n Date entry: ${diary.entryTime?.toDate().toString().split(' ')[0]}");
+          //print(
+          //  "Diary --> Date now: ${DateTime.now().toString().split(' ')[0]} \n Date entry: ${diary.entryTime?.toDate().toString().split(' ')[0]}");
           return Card(
             elevation: 4,
             child: Column(
