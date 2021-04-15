@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
+import 'package:diary/screens/main_page.dart';
 import 'package:flutter/material.dart';
 
 class DeleteEntryDialog extends StatelessWidget {
@@ -29,10 +30,13 @@ class DeleteEntryDialog extends StatelessWidget {
         TextButton(
             onPressed: () {
               // Let's delete!!
-              _linkReference
-                  .doc(currDiary.id)
-                  .delete()
-                  .then((value) => Navigator.of(context).pop());
+              _linkReference.doc(currDiary.id).delete();
+
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MainPage(),
+                  ));
             },
             child: Text(
               'Delete',

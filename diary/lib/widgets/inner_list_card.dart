@@ -4,10 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
 import 'package:diary/utils/date_formatter.dart';
 import 'package:diary/widgets/delete_entry_dialog.dart';
+import 'package:diary/widgets/update_entry_dialog.dart';
+import 'package:diary/widgets/write_entry_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class InnerListCard extends StatelessWidget {
+class InnerListCard extends StatefulWidget {
   const InnerListCard({
     Key? key,
     required this.selectedDate,
@@ -20,15 +22,26 @@ class InnerListCard extends StatelessWidget {
         _index = index,
         super(key: key);
 
-  final DateTime selectedDate;
+  final DateTime? selectedDate;
   final Size _screenSize;
   final List<Diary> _listOfDiaries;
   final int _index;
 
   @override
+  _InnerListCardState createState() => _InnerListCardState();
+}
+
+class _InnerListCardState extends State<InnerListCard> {
+  @override
   Widget build(BuildContext context) {
     final _linkReference = Provider.of<CollectionReference>(context);
-    Diary currDiary = _listOfDiaries[_index];
+    Diary currDiary = widget._listOfDiaries[widget._index];
+
+    final TextEditingController _titleTextController =
+        TextEditingController(text: currDiary.title);
+
+    final TextEditingController _descriptionTextController =
+        TextEditingController(text: currDiary.entry);
 
     // for (var item in filteredList) {
     //   print("Same date___ ${formatDateFromTimestampHour(item.entryTime)}");
@@ -40,7 +53,6 @@ class InnerListCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              //'${formattDate(selectedDate)}',
               '${formatDateFromTimestamp(currDiary.entryTime)}',
               style: TextStyle(
                   color: Colors.blueGrey,
@@ -75,25 +87,13 @@ class InnerListCard extends StatelessWidget {
             TextButton.icon(
                 onPressed: () {}, icon: Icon(Icons.more_horiz), label: Text(''))
           ]),
-
           Image.network(
-            (currDiary.photoUrls == null || currDiary.photoUrls!.length == 0)
+            (currDiary.photoUrls == null)
                 ? 'https://picsum.photos/400/200'
-                : currDiary.photoUrls![0].toString(),
+                : currDiary.photoUrls!.toString(),
             //width: _screenSize.width * 0.9,
             //height: 100,
           ),
-          // SizedBox(
-          //   width: _screenSize.width * 0.8,
-          //   height: _screenSize.height * 0.3,
-          //   child: Image.network(
-          //     (currDiary.photoUrls == null)
-          //         ? 'https://picsum.photos/400/200'
-          //         : currDiary.photoUrls![0].toString(),
-          //     //width: _screenSize.width * 0.9,
-          //     //height: 100,
-          //   ),
-          // ),
           Row(
             children: [
               Flexible(
@@ -122,8 +122,6 @@ class InnerListCard extends StatelessWidget {
               )
             ],
           ),
-
-          //_isSameEntry ? Text('Same Entry => add to the same card') : Text(''),
         ],
       ),
       onTap: () {
@@ -136,7 +134,7 @@ class InnerListCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Container(
-                    width: _screenSize.width * 0.3,
+                    width: widget._screenSize.width * 0.3,
                     child: Row(
                       children: [
                         Text(
@@ -147,7 +145,25 @@ class InnerListCard extends StatelessWidget {
                               fontWeight: FontWeight.bold),
                         ),
                         Spacer(),
-                        IconButton(icon: Icon(Icons.edit), onPressed: () {}),
+                        IconButton(
+                            icon: Icon(Icons.edit),
+                            onPressed: () {
+                              //close this current popup, and open the diary entry alert
+                              Navigator.of(context).pop();
+
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return UpdateEntryDialog(
+                                      titleTextController: _titleTextController,
+                                      descriptionTextController:
+                                          _descriptionTextController,
+                                      currDiary: currDiary,
+                                      linkReference: _linkReference,
+                                      widget: widget);
+                                },
+                              );
+                            }),
                         IconButton(
                             icon: Icon(Icons.delete_forever_sharp),
                             onPressed: () {})
@@ -167,16 +183,17 @@ class InnerListCard extends StatelessWidget {
                             style: TextStyle(color: Colors.green),
                           ),
                         ]),
-
-                    Image.network(
-                      (currDiary.photoUrls == null ||
-                              currDiary.photoUrls!.length == 0)
-                          ? 'https://picsum.photos/400/200'
-                          : currDiary.photoUrls![0].toString(),
-                      //width: _screenSize.width * 0.9,
-                      //height: 100,
+                    SizedBox(
+                      width: widget._screenSize.width * 0.60,
+                      height: widget._screenSize.height * 0.50,
+                      child: Image.network(
+                        (currDiary.photoUrls == null)
+                            ? 'https://picsum.photos/400/200'
+                            : currDiary.photoUrls!.toString(),
+                        //width: _screenSize.width * 0.9,
+                        //height: 100,
+                      ),
                     ),
-
                     Row(
                       children: [
                         Flexible(
@@ -205,8 +222,6 @@ class InnerListCard extends StatelessWidget {
                         )
                       ],
                     ),
-
-                    //_isSameEntry ? Text('Same Entry => add to the same card') : Text(''),
                   ],
                 ),
               ),
@@ -218,7 +233,6 @@ class InnerListCard extends StatelessWidget {
             );
           },
         );
-        print('list taped and item is ==> ${currDiary.entry}');
       },
     );
   }

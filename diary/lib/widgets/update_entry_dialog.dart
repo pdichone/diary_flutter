@@ -1,53 +1,59 @@
 import 'dart:typed_data';
-
-// import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'package:firebase/firebase.dart' as fb;
+import 'package:image_picker_web_redux/image_picker_web_redux.dart';
+import 'package:mime_type/mime_type.dart';
+import 'package:universal_html/html.dart' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
 import 'package:diary/utils/date_formatter.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'package:flutter/foundation.dart';
+import 'package:diary/widgets/delete_entry_dialog.dart';
+import 'package:diary/widgets/inner_list_card.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:universal_html/html.dart' as html;
-
-import 'package:mime_type/mime_type.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:path/path.dart' as Path;
-import 'package:image_picker_web_redux/image_picker_web_redux.dart';
 
-class WriteEntryDialog extends StatefulWidget {
-  const WriteEntryDialog({
+class UpdateEntryDialog extends StatefulWidget {
+  const UpdateEntryDialog({
     Key? key,
-    this.selectedDate,
-    Diary? diary,
-    TextEditingController? titleTextController,
-    TextEditingController? descriptionTextController,
+    required TextEditingController titleTextController,
+    required TextEditingController descriptionTextController,
+    required this.currDiary,
+    required CollectionReference linkReference,
+    required this.widget,
+    this.cloudFile,
+    this.fileBytes,
+    this.imageWidget,
   })  : _titleTextController = titleTextController,
         _descriptionTextController = descriptionTextController,
+        _linkReference = linkReference,
+        _imageWidget = imageWidget,
+        _cloudFile = cloudFile,
+        _fileBytes = fileBytes,
         super(key: key);
 
-  final DateTime? selectedDate;
-  final TextEditingController? _titleTextController;
-  final TextEditingController? _descriptionTextController;
+  final TextEditingController _titleTextController;
+  final TextEditingController _descriptionTextController;
+  final Diary currDiary;
+  final CollectionReference _linkReference;
+  final InnerListCard widget;
+  final html.File? cloudFile;
+  final fileBytes;
+  final Image? imageWidget;
+
+  final html.File? _cloudFile;
+  final _fileBytes;
+  final Image? _imageWidget;
 
   @override
-  _WriteEntryDialogState createState() => _WriteEntryDialogState();
+  _UpdateEntryDialogState createState() => _UpdateEntryDialogState();
 }
 
-class _WriteEntryDialogState extends State<WriteEntryDialog> {
-  var _buttonText = 'Done';
-
-  Image? pickedImage;
-  Uint8List? pickedImageFile;
-
+class _UpdateEntryDialogState extends State<UpdateEntryDialog> {
   html.File? _cloudFile;
   var _fileBytes;
   Image? _imageWidget;
-
   @override
   Widget build(BuildContext context) {
-    final _linkReference = Provider.of<CollectionReference>(context);
-
     return AlertDialog(
       elevation: 5,
       content: Container(
@@ -79,26 +85,17 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.all(Radius.circular(15)),
                             side: BorderSide(color: Colors.green, width: 1))),
-                    // style: ButtonStyle(
-                    //   textStyle: MaterialStateProperty.all<TextStyle>(
-
-                    //   ),
-                    //     backgroundColor:
-                    //         MaterialStateProperty
-                    //             .all<Color>(
-                    //                 Colors.greenAccent),
-                    //     shape: MaterialStateProperty.all<
-                    //             RoundedRectangleBorder>(
-                    //         RoundedRectangleBorder(
-                    //             borderRadius:
-                    //                 BorderRadius.circular(
-                    //                     13),
-                    //             side: BorderSide(
-                    //                 color: Colors.green)))),
                     onPressed: () {
-                      final _fieldsNotEmpty = widget
-                              ._titleTextController!.text.isNotEmpty &&
-                          widget._descriptionTextController!.text.isNotEmpty;
+                      final _fieldsNotEmpty =
+                          widget._titleTextController.text.isNotEmpty &&
+                              widget._descriptionTextController.text.isNotEmpty;
+                      final diaryTitleChanged = widget.currDiary.title !=
+                          widget._titleTextController.text;
+                      final diaryEntryChanged = widget.currDiary.entry !=
+                          widget._descriptionTextController.text;
+
+                      final diaryUpdate =
+                          diaryTitleChanged || diaryEntryChanged;
 
                       firebase_storage.FirebaseStorage fs =
                           firebase_storage.FirebaseStorage.instance;
@@ -106,25 +103,23 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                       final dateTime = DateTime.now();
                       final path = '$dateTime';
 
-                      String? currId;
-
-                      if (_fieldsNotEmpty) {
-                        _linkReference
-                            .add(Diary(
-                          author: "current user!",
-                          entryTime: Timestamp.fromDate(widget.selectedDate!),
-                          entry: widget._descriptionTextController!.text,
-                          title: widget._titleTextController!.text,
-                        ).toMap())
-                            .then((value) {
-                          setState(() {
-                            currId = value.id;
-                          });
-                          return null;
-                        });
-
-                        //fb.StorageReference _ref = fb.storage().ref();
+                      if (_fieldsNotEmpty && diaryUpdate) {
+                        print('Running inside for update');
+                        widget._linkReference
+                            .doc(widget.currDiary.id)
+                            .update(Diary(
+                              author: "current user!",
+                              entryTime: Timestamp.fromDate(
+                                  widget.widget.selectedDate!),
+                              entry: widget._descriptionTextController.text,
+                              title: widget._titleTextController.text,
+                              photoUrls: (widget.currDiary.photoUrls != null)
+                                  ? widget.currDiary.photoUrls.toString()
+                                  : null,
+                            ).toMap());
+                        // only update image if it's not null
                         if (_fileBytes != null) {
+                          print('Running inside for filebytes update');
                           firebase_storage.SettableMetadata? metadata =
                               firebase_storage.SettableMetadata(
                                   contentType: 'image/jpeg',
@@ -136,27 +131,20 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                               .putData(_fileBytes, metadata)
                               .then((value) {
                             return value.ref.getDownloadURL().then((value) {
-                              _linkReference
-                                  .doc(currId!)
+                              widget._linkReference
+                                  .doc(widget.currDiary.id!)
                                   .update({'photo_list': value.toString()});
                               print(value.toString());
                             });
                           });
                         }
 
-                        setState(() {
-                          _buttonText = 'Saving...';
-                        });
-                        Future.delayed(
-                          Duration(milliseconds: 2500),
-                        ).then((value) {
-                          Navigator.of(context).pop();
-                        });
+                        Navigator.of(context).pop();
                       }
                     },
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text(_buttonText),
+                      child: Text('Done'),
                     ))
               ],
             ),
@@ -179,10 +167,30 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                             child: IconButton(
                                 splashRadius: 26,
                                 onPressed: () async {
+                                  // pick image from system!
                                   await getMultipleImageInfos();
                                 },
                                 icon: Icon(Icons.image_rounded)),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: IconButton(
+                                splashRadius: 26,
+                                hoverColor: Colors.red,
+                                onPressed: () {
+                                  //delete item!
+
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return DeleteEntryDialog(
+                                          currDiary: widget.currDiary,
+                                          linkReference: widget._linkReference);
+                                    },
+                                  );
+                                },
+                                icon: Icon(Icons.delete_outline_rounded)),
+                          )
                         ],
                       ),
                     ),
@@ -194,20 +202,31 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("${formattDate(widget.selectedDate!)}"),
+                            Text(
+                                "${formatDateFromTimestamp(widget.currDiary.entryTime)}"),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.60,
+                              height: MediaQuery.of(context).size.height * 0.40,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: (_imageWidget != null)
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: _imageWidget,
+                                      )
+                                    : Image.network(
+                                        (widget.currDiary.photoUrls == null)
+                                            ? 'https://picsum.photos/400/200'
+                                            : widget.currDiary.photoUrls!
+                                                .toString(),
+                                      ),
+                              ),
+                            ),
                             SizedBox(
                               width: MediaQuery.of(context).size.width * 0.5,
                               child: Form(
                                   child: Column(
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: _imageWidget,
-                                  ),
-                                  // Padding(
-                                  //   padding: const EdgeInsets.all(8.0),
-                                  //   child: pickedImage,
-                                  // ),
                                   TextFormField(
                                     validator: (value) {},
                                     controller: widget._titleTextController,
@@ -247,77 +266,10 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
     html.File mediaFile =
         new html.File(mediaData.data!, mediaData.fileName!, {'type': mimeType});
 
-    if (mediaFile != null) {
-      setState(() {
-        _cloudFile = mediaFile;
-        _fileBytes = mediaData.data;
-        _imageWidget = Image.memory(mediaData.data!);
-      });
-    }
+    setState(() {
+      _cloudFile = mediaFile;
+      _fileBytes = mediaData.data;
+      _imageWidget = Image.memory(mediaData.data!);
+    });
   }
-
-//   void uploadImage({@required Function(File file)? onSelected}) {
-//     final fileInputElement = FileUploadInputElement().accept as InputElement;
-//     InputElement uploadInput = fileInputElement..accept = 'image/*';
-//     uploadInput.click();
-
-//     uploadInput.onChange.listen((event) {
-//       final file = uploadInput.files!.first;
-//       final reader = FileReader();
-//       reader.readAsDataUrl(file);
-//       reader.onLoadEnd.listen((event) {
-//         onSelected!(file);
-//         print('done');
-//       });
-//     });
-//   }
-
-//   void uploadToStorage() {
-//     final dateTime = DateTime.now();
-//     final path = '$dateTime/lala-lanxekdia-Wk';
-//     uploadImage(onSelected: (file) {
-//       fb
-//           .storage()
-//           .refFromURL('gs://diary-flutter-test.appspot.com')
-//           .child(path)
-//           .put(file);
-//     });
-//   }
-// }
-
-// class ImageUploadApp {
-//   final fb.StorageReference ref;
-//   final InputElement _uploadImage;
-
-//   ImageUploadApp()
-//       : ref = fb.storage().ref('gs://diary-flutter-test.appspot.com/'),
-//         _uploadImage = querySelector('#upload_image') as InputElement {
-//     _uploadImage.disabled = false;
-
-//     _uploadImage.onChange.listen((e) async {
-//       e.preventDefault();
-//       final file = (e.target as FileUploadInputElement).files![0];
-
-//       final customMetadata = {'location': 'Prague', 'owner': 'You'};
-//       final uploadTask = ref.child(file.name).put(
-//           file,
-//           fb.UploadMetadata(
-//               contentType: file.type, customMetadata: customMetadata));
-//       uploadTask.onStateChanged.listen((e) {
-//         querySelector('#message')!.text =
-//             'Transfered ${e.bytesTransferred}/${e.totalBytes}...';
-//       });
-
-//       try {
-//         final snapshot = await uploadTask.future;
-//         final filePath = await snapshot.ref.getDownloadURL();
-//         final image = ImageElement(src: filePath.toString());
-//         document.body!.append(image);
-//         final metadata = snapshot.metadata.customMetadata;
-//         querySelector('#message')!.text = 'Metadata: ${metadata.toString()}';
-//       } catch (e) {
-//         print(e);
-//       }
-//     });
-//   }
 }

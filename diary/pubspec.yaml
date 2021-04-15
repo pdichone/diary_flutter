@@ -25,12 +25,22 @@ dependencies:
     sdk: flutter
   cloud_firestore: ^1.0.4
   cupertino_icons: ^1.0.2
+  file_picker: ^3.0.1
+  file_selector: ^0.8.2
+  file_selector_web: ^0.8.1
+  firebase: ^9.0.1
   firebase_auth: ^1.0.1
   firebase_core: ^1.0.3
+  firebase_storage: ^8.0.3
   hexcolor: ^2.0.3
+  image_picker: ^0.7.4
+  image_picker_web_redux: any
+  mime_type: ^1.0.0
   provider: ^5.0.0
   syncfusion_flutter_datepicker: ^19.1.55-beta
   timeago: ^3.0.2
+  universal_html: ^2.0.8
+  video_player: ^2.1.1
 
 dev_dependencies:
   flutter_test:

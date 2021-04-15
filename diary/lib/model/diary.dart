@@ -6,14 +6,14 @@ class Diary {
   final String? title;
   final String? author;
   final Timestamp? entryTime;
-  final List<dynamic>? photoUrls;
+  final String? photoUrls;
   final String? entry;
 
 // ? null safety - must add ?
   Diary(
       {this.id,
-      @required this.author,
-      @required this.entryTime,
+      this.author,
+      this.entryTime,
       this.photoUrls,
       this.title,
       this.entry});

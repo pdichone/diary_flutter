@@ -46,6 +46,9 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.green,
         ),
+        // home: MyHomePage(
+        //   title: 'hello',
+        // ),
         home: MainPage(),
       ),
     );

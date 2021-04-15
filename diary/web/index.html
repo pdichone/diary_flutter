@@ -27,16 +27,24 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+
   <!-- This script installs service_worker.js to provide PWA functionality to
        application. For more information, see:
        https://developers.google.com/web/fundamentals/primers/service-workers -->
 
        <!-- The core Firebase JS SDK is always required and must be listed first -->
-<!-- <script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.3/firebase-auth.js"></script> -->
+<!-- <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.2.4/firebase-storage.js"></script> -->
+
+<!-- <script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.3.1/firebase-firestore.js"></script> -->
 
 <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-storage.js"></script>
 <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 
@@ -121,7 +129,9 @@
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 </script>
-  <!-- <script type="text/javascript">
+
+<!-- force to  use html renderer for the images to show-->
+  <script type="text/javascript">
     let useHtml = true;
     if(useHtml) {
       window.flutterWebRenderer = "html";
@@ -130,6 +140,6 @@
       console.log('==>rendering canvaskit');
       window.flutterWebRenderer = "canvaskit";
     }
-  </script> -->
+  </script>
 </body>
 </html>
