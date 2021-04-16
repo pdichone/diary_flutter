@@ -16,7 +16,6 @@ class InnerListCard extends StatefulWidget {
     required Size screenSize,
     required List<Diary> listOfDiaries,
     required int index,
-    required bool isSameEntry,
   })   : _screenSize = screenSize,
         _listOfDiaries = listOfDiaries,
         _index = index,
@@ -91,8 +90,6 @@ class _InnerListCardState extends State<InnerListCard> {
             (currDiary.photoUrls == null)
                 ? 'https://picsum.photos/400/200'
                 : currDiary.photoUrls!.toString(),
-            //width: _screenSize.width * 0.9,
-            //height: 100,
           ),
           Row(
             children: [
@@ -166,7 +163,16 @@ class _InnerListCardState extends State<InnerListCard> {
                             }),
                         IconButton(
                             icon: Icon(Icons.delete_forever_sharp),
-                            onPressed: () {})
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return DeleteEntryDialog(
+                                      currDiary: currDiary,
+                                      linkReference: _linkReference);
+                                },
+                              );
+                            })
                       ],
                     ),
                   ),

@@ -94,8 +94,9 @@ class _UpdateEntryDialogState extends State<UpdateEntryDialog> {
                       final diaryEntryChanged = widget.currDiary.entry !=
                           widget._descriptionTextController.text;
 
-                      final diaryUpdate =
-                          diaryTitleChanged || diaryEntryChanged;
+                      final diaryUpdate = diaryTitleChanged ||
+                          diaryEntryChanged ||
+                          _fileBytes != null;
 
                       firebase_storage.FirebaseStorage fs =
                           firebase_storage.FirebaseStorage.instance;

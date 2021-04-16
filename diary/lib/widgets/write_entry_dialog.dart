@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
 // import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:crop_your_image/crop_your_image.dart';
+import 'package:image/image.dart' as IMG;
 import 'package:firebase/firebase.dart' as fb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
@@ -8,6 +10,7 @@ import 'package:diary/utils/date_formatter.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 
@@ -43,6 +46,7 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
   html.File? _cloudFile;
   var _fileBytes;
   Image? _imageWidget;
+  final _controller = CropController();
 
   @override
   Widget build(BuildContext context) {
@@ -79,22 +83,6 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.all(Radius.circular(15)),
                             side: BorderSide(color: Colors.green, width: 1))),
-                    // style: ButtonStyle(
-                    //   textStyle: MaterialStateProperty.all<TextStyle>(
-
-                    //   ),
-                    //     backgroundColor:
-                    //         MaterialStateProperty
-                    //             .all<Color>(
-                    //                 Colors.greenAccent),
-                    //     shape: MaterialStateProperty.all<
-                    //             RoundedRectangleBorder>(
-                    //         RoundedRectangleBorder(
-                    //             borderRadius:
-                    //                 BorderRadius.circular(
-                    //                     13),
-                    //             side: BorderSide(
-                    //                 color: Colors.green)))),
                     onPressed: () {
                       final _fieldsNotEmpty = widget
                               ._titleTextController!.text.isNotEmpty &&
@@ -123,8 +111,15 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                           return null;
                         });
 
-                        //fb.StorageReference _ref = fb.storage().ref();
                         if (_fileBytes != null) {
+                          //compress fileBytes
+
+                          // Crop(
+                          //   image: _fileBytes,
+                          //   onCropped: (value) {
+                          //     print(value.length);
+                          //   },
+                          // );
                           firebase_storage.SettableMetadata? metadata =
                               firebase_storage.SettableMetadata(
                                   contentType: 'image/jpeg',
@@ -204,10 +199,6 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                                     padding: const EdgeInsets.all(8.0),
                                     child: _imageWidget,
                                   ),
-                                  // Padding(
-                                  //   padding: const EdgeInsets.all(8.0),
-                                  //   child: pickedImage,
-                                  // ),
                                   TextFormField(
                                     validator: (value) {},
                                     controller: widget._titleTextController,
@@ -247,77 +238,24 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
     html.File mediaFile =
         new html.File(mediaData.data!, mediaData.fileName!, {'type': mimeType});
 
-    if (mediaFile != null) {
-      setState(() {
-        _cloudFile = mediaFile;
-        _fileBytes = mediaData.data;
-        _imageWidget = Image.memory(mediaData.data!);
-      });
-    }
+    setState(() {
+      _cloudFile = mediaFile;
+      _fileBytes = mediaData.data!;
+      // _fileBytes = resizeImage(
+      //     mediaData.data!); // using resize stalls the app a bit - trade offs?!
+      _imageWidget = Image.memory(mediaData.data!);
+    });
   }
 
-//   void uploadImage({@required Function(File file)? onSelected}) {
-//     final fileInputElement = FileUploadInputElement().accept as InputElement;
-//     InputElement uploadInput = fileInputElement..accept = 'image/*';
-//     uploadInput.click();
-
-//     uploadInput.onChange.listen((event) {
-//       final file = uploadInput.files!.first;
-//       final reader = FileReader();
-//       reader.readAsDataUrl(file);
-//       reader.onLoadEnd.listen((event) {
-//         onSelected!(file);
-//         print('done');
-//       });
-//     });
-//   }
-
-//   void uploadToStorage() {
-//     final dateTime = DateTime.now();
-//     final path = '$dateTime/lala-lanxekdia-Wk';
-//     uploadImage(onSelected: (file) {
-//       fb
-//           .storage()
-//           .refFromURL('gs://diary-flutter-test.appspot.com')
-//           .child(path)
-//           .put(file);
-//     });
-//   }
-// }
-
-// class ImageUploadApp {
-//   final fb.StorageReference ref;
-//   final InputElement _uploadImage;
-
-//   ImageUploadApp()
-//       : ref = fb.storage().ref('gs://diary-flutter-test.appspot.com/'),
-//         _uploadImage = querySelector('#upload_image') as InputElement {
-//     _uploadImage.disabled = false;
-
-//     _uploadImage.onChange.listen((e) async {
-//       e.preventDefault();
-//       final file = (e.target as FileUploadInputElement).files![0];
-
-//       final customMetadata = {'location': 'Prague', 'owner': 'You'};
-//       final uploadTask = ref.child(file.name).put(
-//           file,
-//           fb.UploadMetadata(
-//               contentType: file.type, customMetadata: customMetadata));
-//       uploadTask.onStateChanged.listen((e) {
-//         querySelector('#message')!.text =
-//             'Transfered ${e.bytesTransferred}/${e.totalBytes}...';
-//       });
-
-//       try {
-//         final snapshot = await uploadTask.future;
-//         final filePath = await snapshot.ref.getDownloadURL();
-//         final image = ImageElement(src: filePath.toString());
-//         document.body!.append(image);
-//         final metadata = snapshot.metadata.customMetadata;
-//         querySelector('#message')!.text = 'Metadata: ${metadata.toString()}';
-//       } catch (e) {
-//         print(e);
-//       }
-//     });
-//   }
+  Uint8List resizeImage(Uint8List data) {
+    //source: https://stackoverflow.com/questions/62526213/change-image-size-from-uint8list-data-in-flutter
+    print('image Before resized -=> ${data.length}');
+    Uint8List? resizedData = data;
+    IMG.Image img = IMG.decodeImage(data)!;
+    IMG.Image resized = IMG.copyResize(img,
+        width: img.width * 0.5 as int, height: img.height * 0.5 as int);
+    resizedData = IMG.encodeJpg(resized) as Uint8List;
+    print('image resized -=> ${resizedData.length}');
+    return resizedData;
+  }
 }

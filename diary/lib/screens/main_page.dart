@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
+import 'package:diary/util/services.dart';
+import 'package:diary/utils/date_formatter.dart';
 import 'package:diary/widgets/diary_list_view.dart';
 import 'package:diary/widgets/write_entry_dialog.dart';
 import 'package:flutter/material.dart';
@@ -11,13 +14,17 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  TextEditingController _searchController = TextEditingController();
+  //TextEditingController _searchController = TextEditingController();
   DateTime selectedDate = DateTime.now();
+
+  String? _dropDownText;
 
   @override
   Widget build(BuildContext context) {
     final _screenSize = MediaQuery.of(context).size;
     final _listOfDiaries = Provider.of<List<Diary>>(context);
+    var userDiaryFilteredEntriesListStream;
+    final _filteredList = [];
 
     TextEditingController _titleTextController = TextEditingController();
     TextEditingController _descriptionTextController = TextEditingController();
@@ -30,58 +37,65 @@ class _MainPageState extends State<MainPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(28.0),
+              padding: const EdgeInsets.only(left: 8.0, top: 8.0),
               child: Text(
                 'Diary',
                 style: TextStyle(fontSize: 39, color: Colors.blueGrey.shade400),
               ),
             ),
-            //pill button
             Padding(
-              padding: const EdgeInsets.only(top: 38),
-              child: TextButton(
-                  onPressed: () {},
-                  child: SizedBox(
-                    child: Text(
-                      'Today',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  )),
-            ),
-            Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: SizedBox(
-                width: _screenSize.width * 0.4,
-                height: 75,
-                child: Padding(
-                  padding: const EdgeInsets.all(18.0),
-                  child: Form(
-                    child: TextFormField(
-                      style: TextStyle(color: Colors.black),
-                      controller: _searchController,
-                      onChanged: (value) {
-                        print(value.toString());
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Search',
-                        prefixIcon: Icon(Icons.search),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide(color: Colors.blue)),
-                        suffixIcon: TextButton(
-                            onPressed: () {
-                              //print("list==> ${_listOfDiaries.length}");
-                            },
-                            child: SizedBox(
-                              child: Icon(Icons.check),
-                            )),
-                      ),
-                    ),
-                  ),
-                ),
+              padding: const EdgeInsets.only(right: 8.0, top: 8.0),
+              child: Text(
+                'Book',
+                style: TextStyle(fontSize: 39, color: Colors.green),
               ),
             ),
+            //pill button
+            // Padding(
+            //   padding: const EdgeInsets.only(top: 38),
+            //   child: TextButton(
+            //       onPressed: () {},
+            //       child: SizedBox(
+            //         child: Text(
+            //           'Today',
+            //           style: TextStyle(fontSize: 16),
+            //         ),
+            //       )),
+            // ),
+            Spacer(),
+            // Padding(
+            //   padding: const EdgeInsets.all(18.0),
+            //   child: SizedBox(
+            //     width: _screenSize.width * 0.4,
+            //     height: 75,
+            //     child: Padding(
+            //       padding: const EdgeInsets.all(18.0),
+            //       child: Form(
+            //         child: TextFormField(
+            //           style: TextStyle(color: Colors.black),
+            //           controller: _searchController,
+            //           onChanged: (value) {
+            //             print(value.toString());
+            //           },
+            //           decoration: InputDecoration(
+            //             hintText: 'Search',
+            //             prefixIcon: Icon(Icons.search),
+            //             focusedBorder: OutlineInputBorder(
+            //                 borderRadius: BorderRadius.circular(10),
+            //                 borderSide: BorderSide(color: Colors.blue)),
+            //             suffixIcon: TextButton(
+            //                 onPressed: () {
+            //                   //print("list==> ${_listOfDiaries.length}");
+            //                 },
+            //                 child: SizedBox(
+            //                   child: Icon(Icons.check),
+            //                 )),
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
             Spacer(),
           ],
         ),
@@ -99,8 +113,63 @@ class _MainPageState extends State<MainPage> {
                     ),
                   );
                 }).toList(),
-                hint: Text('Select'),
-                onChanged: (_) {},
+                hint: (_dropDownText == null)
+                    ? Text('Select')
+                    : Text(_dropDownText!),
+                onChanged: (value) {
+                  if (value == 'Latest') {
+                    setState(() {
+                      _dropDownText = value;
+                    });
+                    _listOfDiaries.clear(); // clear list first!
+
+                    userDiaryFilteredEntriesListStream =
+                        DiaryService().getLatestDiaries('current user!');
+                    // FirebaseFirestore
+                    //     .instance
+                    //     .collection('diaries')
+                    //     .where('author', isEqualTo: 'current user!')
+                    //     .orderBy('entry_time', descending: true)
+                    //     .get()
+                    //     .then((value) {
+                    //   return value.docs.map((diary) {
+                    //     //print(diary.data().entries.first);
+                    //     return Diary.fromDocument(diary);
+                    //   });
+                    // });
+
+                    userDiaryFilteredEntriesListStream.then((value) {
+                      //print('---> ${value.toString()}');
+                      for (var item in value) {
+                        setState(() {
+                          _listOfDiaries.add(item); //_filteredList.add(item);
+                        });
+                        print(
+                            '---> ${formatDateFromTimestamp(item.entryTime)}');
+                      }
+                    });
+                  } else if (value == 'Earliest') {
+                    setState(() {
+                      _dropDownText = value;
+                    });
+                    //clear list before adding new items.
+                    _listOfDiaries.clear();
+
+                    userDiaryFilteredEntriesListStream =
+                        DiaryService().getEarliestDiaries('current user!');
+
+                    userDiaryFilteredEntriesListStream.then((value) {
+                      //print('---> ${value.toString()}');
+                      for (var item in value) {
+                        setState(() {
+                          _listOfDiaries.add(item); //_filteredList.add(item);
+                        });
+                        print(
+                            '---> ${formatDateFromTimestamp(item.entryTime)}');
+                      }
+                    });
+                  }
+                },
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -152,8 +221,32 @@ class _MainPageState extends State<MainPage> {
                         setState(() {
                           selectedDate =
                               dateRangePickerSelectionChangedArgs.value;
+                          //clear list first
+                          _listOfDiaries.clear();
+                          userDiaryFilteredEntriesListStream = DiaryService()
+                              .getSameDateDiaries(
+                                  Timestamp.fromDate(selectedDate).toDate(),
+                                  Timestamp.fromDate(selectedDate).toDate());
+
+                          userDiaryFilteredEntriesListStream.then((value) {
+                            for (var item in value) {
+                              setState(() {
+                                _listOfDiaries
+                                    .add(item); //_filteredList.add(item);
+                              });
+                            }
+                          });
+
+                          // print(Timestamp.fromDate(selectedDate)
+                          //     .toDate()
+                          //     .toString()
+                          //     .split(' '));
+                          // print(Timestamp.fromDate(
+                          //         selectedDate.add(Duration(days: 1)))
+                          //     .toDate()
+                          //     .toString()
+                          //     .split(' '));
                         });
-                        //print(selectedDate.toLocal().toIso8601String());
                       },
                     ),
                   ),
@@ -162,12 +255,6 @@ class _MainPageState extends State<MainPage> {
                     child: Card(
                       elevation: 4,
                       child: TextButton.icon(
-                          // style: ButtonStyle(
-                          //     shape: MaterialStateProperty.all<
-                          //             RoundedRectangleBorder>(
-                          //         RoundedRectangleBorder(
-                          //             borderRadius: BorderRadius.circular(18.0),
-                          //             side: BorderSide(color: Colors.red)))),
                           icon: Icon(
                             Icons.add,
                             size: 40,
@@ -185,11 +272,13 @@ class _MainPageState extends State<MainPage> {
                               },
                             );
                           },
-                          label: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'Write New',
-                              style: TextStyle(fontSize: 19),
+                          label: Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Write New',
+                                style: TextStyle(fontSize: 17),
+                              ),
                             ),
                           )),
                     ),
