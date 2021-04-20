@@ -3,8 +3,6 @@ import 'package:hexcolor/hexcolor.dart';
 
 InputDecoration buildInputDecoration(String label, String hintText) {
   return InputDecoration(
-
-      // suffix: ,
       fillColor: Colors.white,
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),

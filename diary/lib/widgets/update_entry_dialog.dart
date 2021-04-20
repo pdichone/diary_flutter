@@ -1,13 +1,13 @@
-import 'dart:typed_data';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker_web_redux/image_picker_web_redux.dart';
 import 'package:mime_type/mime_type.dart';
+import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
 import 'package:diary/utils/date_formatter.dart';
 import 'package:diary/widgets/delete_entry_dialog.dart';
 import 'package:diary/widgets/inner_list_card.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:path/path.dart' as Path;
@@ -26,9 +26,9 @@ class UpdateEntryDialog extends StatefulWidget {
   })  : _titleTextController = titleTextController,
         _descriptionTextController = descriptionTextController,
         _linkReference = linkReference,
-        _imageWidget = imageWidget,
-        _cloudFile = cloudFile,
-        _fileBytes = fileBytes,
+        // _imageWidget = imageWidget,
+        // _cloudFile = cloudFile,
+        // _fileBytes = fileBytes,
         super(key: key);
 
   final TextEditingController _titleTextController;
@@ -40,20 +40,37 @@ class UpdateEntryDialog extends StatefulWidget {
   final fileBytes;
   final Image? imageWidget;
 
-  final html.File? _cloudFile;
-  final _fileBytes;
-  final Image? _imageWidget;
+  // final html.File? _cloudFile;
+  // final _fileBytes;
+  // final Image? _imageWidget;
 
   @override
   _UpdateEntryDialogState createState() => _UpdateEntryDialogState();
 }
 
 class _UpdateEntryDialogState extends State<UpdateEntryDialog> {
-  html.File? _cloudFile;
+  // html.File? _cloudFile;
   var _fileBytes;
   Image? _imageWidget;
+
   @override
   Widget build(BuildContext context) {
+    final _user = Provider.of<User?>(context);
+    // This works for now - issues with passing provider down the tree
+    // final userStream = FirebaseAuth.instance.authStateChanges();
+    // User? _currUser;
+    // final _user = userStream.map((event) {
+    //   return event;
+    // });
+
+    setState(() {
+      // _user.first.then((value) {
+      //   _currUser = value!;
+      //   print(_currUser!.displayName);
+      //   return null;
+      // });
+    });
+
     return AlertDialog(
       elevation: 5,
       content: Container(
@@ -109,7 +126,8 @@ class _UpdateEntryDialogState extends State<UpdateEntryDialog> {
                         widget._linkReference
                             .doc(widget.currDiary.id)
                             .update(Diary(
-                              author: "current user!",
+                              userId: _user!.uid,
+                              author: _user.email!.split("@")[0],
                               entryTime: Timestamp.fromDate(
                                   widget.widget.selectedDate!),
                               entry: widget._descriptionTextController.text,
@@ -128,7 +146,7 @@ class _UpdateEntryDialogState extends State<UpdateEntryDialog> {
 
                           fs
                               .ref()
-                              .child('images/$path')
+                              .child('images/$path${_user.uid}')
                               .putData(_fileBytes, metadata)
                               .then((value) {
                             return value.ref.getDownloadURL().then((value) {
@@ -268,7 +286,7 @@ class _UpdateEntryDialogState extends State<UpdateEntryDialog> {
         new html.File(mediaData.data!, mediaData.fileName!, {'type': mimeType});
 
     setState(() {
-      _cloudFile = mediaFile;
+      // _cloudFile = mediaFile;
       _fileBytes = mediaData.data;
       _imageWidget = Image.memory(mediaData.data!);
     });

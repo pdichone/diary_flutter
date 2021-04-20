@@ -1,11 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:delayed_display/delayed_display.dart';
 import 'package:diary/model/diary.dart';
-import 'package:diary/util/services.dart';
+
 import 'package:diary/utils/date_formatter.dart';
 import 'package:diary/widgets/inner_list_card.dart';
 import 'package:diary/widgets/write_entry_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class DiaryListView extends StatefulWidget {
   const DiaryListView({
@@ -30,14 +31,20 @@ class _DiaryListViewState extends State<DiaryListView> {
   Widget build(BuildContext context) {
     TextEditingController _titleTextController = TextEditingController();
     TextEditingController _descriptionTextController = TextEditingController();
+    final _user = Provider.of<User?>(context);
+
+    var _diaryList = widget._listOfDiaries;
+    var filteredList = _diaryList.where((element) =>
+        element.userId == _user!.uid); //only get diaries for this current user!
+
     return Column(
       children: [
         Expanded(
           child: SizedBox(
             width: widget._screenSize.width * 0.4,
-            child: (widget._listOfDiaries.isNotEmpty)
+            child: (filteredList.isNotEmpty)
                 ? ListView.builder(
-                    itemCount: widget._listOfDiaries.length,
+                    itemCount: filteredList.length,
                     itemBuilder: (context, index) {
                       //final diary = _listOfDiaries[index];
 
@@ -52,7 +59,7 @@ class _DiaryListViewState extends State<DiaryListView> {
                               InnerListCard(
                                   selectedDate: widget.selectedDate,
                                   screenSize: widget._screenSize,
-                                  listOfDiaries: widget._listOfDiaries,
+                                  listOfDiaries: filteredList.toList(),
                                   index: index),
                             ],
                           ),

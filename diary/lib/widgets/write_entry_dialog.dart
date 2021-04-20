@@ -1,19 +1,15 @@
 import 'dart:typed_data';
 
-// import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'package:crop_your_image/crop_your_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image/image.dart' as IMG;
-import 'package:firebase/firebase.dart' as fb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
 import 'package:diary/utils/date_formatter.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
-
 import 'package:mime_type/mime_type.dart';
 import 'package:path/path.dart' as Path;
 import 'package:image_picker_web_redux/image_picker_web_redux.dart';
@@ -22,6 +18,7 @@ class WriteEntryDialog extends StatefulWidget {
   const WriteEntryDialog({
     Key? key,
     this.selectedDate,
+    BuildContext? context,
     Diary? diary,
     TextEditingController? titleTextController,
     TextEditingController? descriptionTextController,
@@ -43,14 +40,15 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
   Image? pickedImage;
   Uint8List? pickedImageFile;
 
-  html.File? _cloudFile;
+  // html.File? _cloudFile;
   var _fileBytes;
   Image? _imageWidget;
-  final _controller = CropController();
 
   @override
   Widget build(BuildContext context) {
     final _linkReference = Provider.of<CollectionReference>(context);
+
+    final _user = Provider.of<User?>(context);
 
     return AlertDialog(
       elevation: 5,
@@ -99,7 +97,8 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                       if (_fieldsNotEmpty) {
                         _linkReference
                             .add(Diary(
-                          author: "current user!",
+                          userId: _user!.uid,
+                          author: _user.email!.split('@')[0],
                           entryTime: Timestamp.fromDate(widget.selectedDate!),
                           entry: widget._descriptionTextController!.text,
                           title: widget._titleTextController!.text,
@@ -127,7 +126,7 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
 
                           fs
                               .ref()
-                              .child('images/$path')
+                              .child('images/$path${_user.uid}')
                               .putData(_fileBytes, metadata)
                               .then((value) {
                             return value.ref.getDownloadURL().then((value) {
@@ -197,7 +196,13 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
                                 children: [
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: _imageWidget,
+                                    child: SizedBox(
+                                        height: (MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.8) /
+                                            2,
+                                        child: _imageWidget),
                                   ),
                                   TextFormField(
                                     validator: (value) {},
@@ -239,7 +244,7 @@ class _WriteEntryDialogState extends State<WriteEntryDialog> {
         new html.File(mediaData.data!, mediaData.fileName!, {'type': mimeType});
 
     setState(() {
-      _cloudFile = mediaFile;
+      // _cloudFile = mediaFile;
       _fileBytes = mediaData.data!;
       // _fileBytes = resizeImage(
       //     mediaData.data!); // using resize stalls the app a bit - trade offs?!

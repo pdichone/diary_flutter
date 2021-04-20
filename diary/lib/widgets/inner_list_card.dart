@@ -1,11 +1,8 @@
-import 'dart:html';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:diary/model/diary.dart';
 import 'package:diary/utils/date_formatter.dart';
 import 'package:diary/widgets/delete_entry_dialog.dart';
 import 'package:diary/widgets/update_entry_dialog.dart';
-import 'package:diary/widgets/write_entry_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
